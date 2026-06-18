@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Claude Usage · Graphs</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <span class="brand">󰧑 Claude usage</span>
+    <a href="/">Dashboard</a>
+    <a href="/graphs.html">Graphs</a>
+    <a href="/raw.html">Raw</a>
+    <a href="/stats.html">Stats</a>
+  </nav>
+
+  <main>
+    <div class="row-head">
+      <h1>Graphs</h1>
+      <div class="ranges" id="ranges">
+        <button data-range="24h">24h</button>
+        <button data-range="7d" class="active">7d</button>
+        <button data-range="30d">30d</button>
+        <button data-range="all">all</button>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head"><span class="dot session"></span><span>Session (5h window)</span></div>
+      <canvas id="sessionChart" height="240"></canvas>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span class="dot week"></span><span>Week (7d window)</span></div>
+      <canvas id="weekChart" height="240"></canvas>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Daily peak utilization</span></div>
+      <canvas id="dailyChart" height="240"></canvas>
+      <div class="legend">
+        <span class="dot session"></span>Session peak
+        <span class="dot week"></span>Week peak
+      </div>
+    </section>
+  </main>
+
+  <script src="/common.js"></script>
+  <script src="/graphs.js"></script>
+</body>
+</html>

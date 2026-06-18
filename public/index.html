@@ -3,18 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Claude Usage Collection</title>
+  <title>Claude Usage · Dashboard</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <nav class="nav">
+    <span class="brand">󰧑 Claude usage</span>
+    <a href="/">Dashboard</a>
+    <a href="/graphs.html">Graphs</a>
+    <a href="/raw.html">Raw</a>
+    <a href="/stats.html">Stats</a>
+    <button id="refresh" title="Fetch now">↻</button>
+  </nav>
+
   <main>
-    <header>
-      <h1>󰧑 Claude usage</h1>
-      <div class="meta">
-        <span id="updated">—</span>
-        <button id="refresh" title="Fetch now">↻</button>
-      </div>
-    </header>
+    <div class="row-head">
+      <h1>Dashboard</h1>
+      <span class="muted" id="updated">—</span>
+    </div>
 
     <div id="error" class="error" hidden></div>
 
@@ -23,37 +29,32 @@
         <div class="label">Session <span class="sub">5h window</span></div>
         <div class="pct" id="sessionPct">—</div>
         <div class="bar"><span id="sessionBar"></span></div>
-        <div class="resets" id="sessionResets"></div>
+        <div class="resets muted" id="sessionResets"></div>
       </div>
       <div class="card">
         <div class="label">Week <span class="sub">7d window</span></div>
         <div class="pct" id="weekPct">—</div>
         <div class="bar"><span id="weekBar"></span></div>
-        <div class="resets" id="weekResets"></div>
+        <div class="resets muted" id="weekResets"></div>
       </div>
     </section>
 
-    <section class="chart-box">
-      <div class="chart-head">
-        <span>History</span>
-        <div class="ranges" id="ranges">
-          <button data-range="24h">24h</button>
-          <button data-range="7d" class="active">7d</button>
-          <button data-range="30d">30d</button>
-          <button data-range="all">all</button>
-        </div>
+    <section class="panel">
+      <div class="panel-head">
+        <span>Last 7 days</span>
+        <a class="link" href="/graphs.html">more graphs →</a>
       </div>
-      <canvas id="chart" width="900" height="280"></canvas>
+      <canvas id="chart" height="240"></canvas>
       <div class="legend">
         <span class="dot session"></span>Session
         <span class="dot week"></span>Week
       </div>
     </section>
 
-    <footer>
-      polls every <span id="interval">5</span> min · stored locally in SQLite
-    </footer>
+    <footer>polls every <span id="interval">5</span> min · stored in SQLite</footer>
   </main>
-  <script src="/app.js"></script>
+
+  <script src="/common.js"></script>
+  <script src="/dashboard.js"></script>
 </body>
 </html>

@@ -62,14 +62,34 @@ sudo systemctl enable --now claude-collection
 | `CLAUDE_CREDENTIALS` | `~/.claude/.credentials.json`  | path to the credentials file     |
 | `CLAUDE_TOKEN`       | *(unset)*                      | hard-code a token (skips file)   |
 
+## Pages
+
+The UI is several pages, linked from the top nav:
+
+- **/** — Dashboard: current Session/Week % + a 7-day chart.
+- **/graphs.html** — Graphs: session & week over time + daily-peak bars, with range selector.
+- **/raw.html** — Raw: the database table, paginated, with CSV/JSON export.
+- **/stats.html** — Stats: peak/avg utilization, sample count, collection span.
+
 ## API
 
-| Route                       | Description                                   |
-|-----------------------------|-----------------------------------------------|
-| `GET /api/current`          | latest sample + poll interval + last error    |
-| `GET /api/history?range=7d` | samples (`range` = `24h` \| `7d` \| `30d` \| `all`) |
-| `GET /api/poll`             | fetch one sample right now                     |
-| `GET /health`               | `{"ok":true}`                                  |
+| Route                        | Description                                   |
+|------------------------------|-----------------------------------------------|
+| `GET /api/current`           | latest sample + poll interval + last error    |
+| `GET /api/history?range=7d`  | samples (`range` = `24h` \| `7d` \| `30d` \| `all`) |
+| `GET /api/raw?limit=&offset=`| paginated rows (newest first) + total count   |
+| `GET /api/stats`             | aggregates (count, span, peak/avg)            |
+| `GET /api/export.csv`        | full history as CSV download                   |
+| `GET /api/export.json`       | full history as JSON download                  |
+| `GET /api/poll`              | fetch one sample right now                     |
+| `GET /health`                | `{"ok":true}`                                  |
+
+## The database persists
+
+Data lives in a single **SQLite** file at `DB_PATH` (default `./data/usage.db`).
+Stopping/restarting the server does **not** touch it — samples accumulate
+forever until you delete the file. With Docker, `./data` is a host volume, so the
+DB survives container rebuilds too. (Only `rm`-ing `data/` or the volume clears it.)
 
 ## Database schema
 

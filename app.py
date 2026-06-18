@@ -116,6 +116,41 @@ def db_history(since_ts):
         return [dict(r) for r in rows]
 
 
+def db_count():
+    with db_connect() as conn:
+        return conn.execute("SELECT COUNT(*) AS n FROM usage").fetchone()["n"]
+
+
+def db_raw(limit, offset):
+    with db_connect() as conn:
+        rows = conn.execute(
+            "SELECT id, ts, session, week, opus, sonnet, session_resets, week_resets "
+            "FROM usage ORDER BY ts DESC LIMIT ? OFFSET ?",
+            (limit, offset),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def db_all():
+    with db_connect() as conn:
+        rows = conn.execute(
+            "SELECT ts, session, week, opus, sonnet, session_resets, week_resets "
+            "FROM usage ORDER BY ts ASC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def db_stats():
+    with db_connect() as conn:
+        r = conn.execute(
+            """SELECT COUNT(*) AS n, MIN(ts) AS first_ts, MAX(ts) AS last_ts,
+                      MAX(session) AS peak_session, MAX(week) AS peak_week,
+                      AVG(session) AS avg_session, AVG(week) AS avg_week
+               FROM usage"""
+        ).fetchone()
+        return dict(r)
+
+
 # --------------------------------------------------------------------------- #
 # fetching
 # --------------------------------------------------------------------------- #
@@ -226,40 +261,75 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _download(self, data, ctype, filename):
+        body = data if isinstance(data, bytes) else data.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self):
         route = urlparse(self.path)
         p = route.path
+        q = parse_qs(route.query)
 
-        if p == "/" or p == "/index.html":
-            return self._static("index.html")
-        if p in ("/app.js", "/style.css"):
-            return self._static(p.lstrip("/"))
         if p == "/health":
             return self._json({"ok": True})
 
         if p == "/api/current":
-            latest = db_latest()
             return self._json({
                 "ok": True,
-                "latest": latest,
+                "latest": db_latest(),
                 "poll_interval": POLL_INTERVAL,
                 "error": _last_error,
             })
 
         if p == "/api/history":
-            q = parse_qs(route.query)
-            rng = (q.get("range", ["7d"])[0])
+            rng = q.get("range", ["7d"])[0]
             window = RANGE_SECONDS.get(rng, RANGE_SECONDS["7d"])
             since = int(time.time()) - window
             return self._json({"ok": True, "range": rng, "rows": db_history(since)})
 
-        if p == "/api/poll":  # manual refresh
+        if p == "/api/stats":
+            return self._json({"ok": True, "stats": db_stats(), "poll_interval": POLL_INTERVAL})
+
+        if p == "/api/raw":
+            try:
+                limit = max(1, min(1000, int(q.get("limit", ["100"])[0])))
+                offset = max(0, int(q.get("offset", ["0"])[0]))
+            except ValueError:
+                limit, offset = 100, 0
+            return self._json({
+                "ok": True, "total": db_count(),
+                "limit": limit, "offset": offset, "rows": db_raw(limit, offset),
+            })
+
+        if p == "/api/export.json":
+            return self._download(
+                json.dumps(db_all(), indent=2), "application/json", "claude-usage.json")
+
+        if p == "/api/export.csv":
+            rows = db_all()
+            lines = ["ts,iso,session,week,opus,sonnet,session_resets,week_resets"]
+            for r in rows:
+                iso = datetime.fromtimestamp(r["ts"], timezone.utc).isoformat()
+                lines.append(",".join(str(x if x is not None else "") for x in [
+                    r["ts"], iso, r["session"], r["week"], r["opus"], r["sonnet"],
+                    r["session_resets"], r["week_resets"],
+                ]))
+            return self._download("\n".join(lines) + "\n", "text/csv", "claude-usage.csv")
+
+        if p == "/api/poll":  # manual fetch
             try:
                 return self._json({"ok": True, "sample": _strip_raw(poll_once())})
             except Exception as e:  # noqa: BLE001
                 return self._json({"ok": False, "error": str(e)}, code=502)
 
-        self.send_error(404)
+        # everything else -> static file from public/
+        name = "index.html" if p == "/" else p.lstrip("/")
+        return self._static(name)
 
 
 def _strip_raw(sample):
