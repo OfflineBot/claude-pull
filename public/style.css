@@ -1,0 +1,123 @@
+/* Dark mode by default — mirrors the user's active kitty colour scheme
+   (~/.config/kitty/kitty.conf). */
+:root {
+  --bg:       #11121a;                    /* kitty background */
+  --surface:  #171925;                    /* slight elevation of bg */
+  --border:   rgba(74, 91, 120, 0.45);    /* kitty color8 #4a5b78 */
+  --text:     #d5dde8;                    /* kitty foreground */
+  --muted:    rgba(213, 221, 232, 0.55);
+  --faint:    rgba(74, 91, 120, 0.22);
+  --green:    #95b894;                    /* kitty color2 */
+  --cyan:     #8fbed1;                    /* kitty color6 */
+  --yellow:   #d4b97a;                    /* kitty color3 */
+  --red:      #d8909a;                    /* kitty color1 */
+  --blue:     #91a8d0;                    /* kitty color4 */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "FiraCode Nerd Font Mono", ui-monospace, "JetBrains Mono",
+               "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+h1 { font-size: 22px; font-weight: 600; margin: 0; }
+.meta { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+
+#refresh {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 34px; height: 34px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background .15s, transform .15s;
+}
+#refresh:hover { background: #232433; }
+#refresh:active { transform: rotate(180deg); }
+
+.error {
+  background: rgba(251, 72, 51, 0.12);
+  border: 1px solid var(--red);
+  color: var(--red);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+@media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.label { font-size: 14px; color: var(--text); margin-bottom: 6px; }
+.label .sub { color: var(--muted); font-size: 11px; margin-left: 6px; }
+.pct { font-size: 40px; font-weight: 600; line-height: 1.1; }
+.bar {
+  margin-top: 12px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--faint);
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 4px;
+  background: var(--green);
+  transition: width .4s ease, background .3s;
+}
+.resets { margin-top: 8px; color: var(--muted); font-size: 11px; min-height: 14px; }
+
+.chart-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.chart-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; font-size: 14px;
+}
+.ranges button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 4px 10px;
+  margin-left: 6px;
+  font: inherit; font-size: 12px;
+  cursor: pointer;
+}
+.ranges button.active { color: var(--bg); background: var(--green); border-color: var(--green); }
+
+canvas { width: 100%; height: auto; display: block; }
+
+.legend { margin-top: 10px; color: var(--muted); font-size: 12px; }
+.legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 6px 0 14px; vertical-align: middle; }
+.legend .dot.session { background: var(--green); }
+.legend .dot.week { background: var(--cyan); }
+
+footer { margin-top: 22px; text-align: center; color: var(--muted); font-size: 12px; }

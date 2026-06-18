@@ -1,0 +1,9 @@
+# runtime data — never commit the database or any credentials
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+**/.credentials.json
+__pycache__/
+*.pyc

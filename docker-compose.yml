@@ -1,0 +1,16 @@
+services:
+  claude-collection:
+    build: .
+    container_name: claude-collection
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      POLL_INTERVAL: "300"
+    volumes:
+      # persist the SQLite database on the host
+      - ./data:/data
+      # the OAuth token is read fresh on every poll — mount the host's Claude
+      # credentials read-only so a still-logged-in Claude Code keeps it valid.
+      # (Override the source path if your credentials live elsewhere.)
+      - ${CLAUDE_CREDENTIALS_DIR:-~/.claude}/.credentials.json:/credentials/.credentials.json:ro

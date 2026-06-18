@@ -1,0 +1,23 @@
+# systemd unit for running without Docker.
+# Edit User= and the WorkingDirectory/path, then:
+#   sudo cp claude-collection.service /etc/systemd/system/
+#   sudo systemctl enable --now claude-collection
+[Unit]
+Description=claude-collection — Claude usage logger
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=offlinebot
+WorkingDirectory=/home/offlinebot/Downloads/claude-collection
+Environment=PORT=8765
+Environment=POLL_INTERVAL=300
+Environment=DB_PATH=/home/offlinebot/Downloads/claude-collection/data/usage.db
+Environment=CLAUDE_CREDENTIALS=/home/offlinebot/.claude/.credentials.json
+ExecStart=/usr/bin/python3 app.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
