@@ -7,10 +7,18 @@ services:
       - "8765:8765"
     environment:
       POLL_INTERVAL: "300"
+      # On a remote host (Coolify) there is no Claude Code to keep the
+      # credentials file fresh, so provide the OAuth access token directly.
+      # Set CLAUDE_TOKEN in Coolify → Environment Variables.
+      CLAUDE_TOKEN: "${CLAUDE_TOKEN:-}"
+      CLAUDE_CREDENTIALS: "/credentials/.credentials.json"
     volumes:
-      # persist the SQLite database on the host
-      - ./data:/data
-      # the OAuth token is read fresh on every poll — mount the host's Claude
-      # credentials read-only so a still-logged-in Claude Code keeps it valid.
-      # (Override the source path if your credentials live elsewhere.)
-      - ${CLAUDE_CREDENTIALS_DIR:-~/.claude}/.credentials.json:/credentials/.credentials.json:ro
+      # named volume -> the SQLite DB survives redeploys (Coolify keeps it)
+      - claude-data:/data
+      # OPTIONAL (only when deploying on a machine where Claude Code is logged
+      # in): expose the real credentials so the token stays auto-refreshed.
+      # Uncomment and set an ABSOLUTE host path — do NOT use ~ here.
+      # - /home/youruser/.claude/.credentials.json:/credentials/.credentials.json:ro
+
+volumes:
+  claude-data:
