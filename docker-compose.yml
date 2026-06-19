@@ -15,10 +15,14 @@ services:
     volumes:
       # named volume -> the SQLite DB survives redeploys (Coolify keeps it)
       - claude-data:/data
-      # OPTIONAL (only when deploying on a machine where Claude Code is logged
-      # in): expose the real credentials so the token stays auto-refreshed.
-      # Uncomment and set an ABSOLUTE host path — do NOT use ~ here.
-      # - /home/youruser/.claude/.credentials.json:/credentials/.credentials.json:ro
+      # Expose the host's Claude credentials DIRECTORY (not the single file!)
+      # so the always-refreshed OAuth token from Claude Code is visible on
+      # every poll. Docker pins file-bind inodes at mount time, so a single-
+      # file mount would freeze the token at deploy and start handing back
+      # 401 after ~30 min — exactly the symptom we just hit. A directory
+      # bind reads the current .credentials.json on every open().
+      # If Claude Code lives in a different home, edit the host path here.
+      - /home/offlinebot/.claude:/credentials:ro
 
 volumes:
   claude-data:
