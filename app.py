@@ -14,7 +14,9 @@ Config (environment variables, all optional):
   POLL_INTERVAL        seconds between samples          (default 300 = 5 min)
   DB_PATH              sqlite file path                 (default ./data/usage.db)
   CLAUDE_CREDENTIALS   path to credentials.json         (default ~/.claude/.credentials.json)
-  CLAUDE_TOKEN         OAuth access token override      (else read from credentials)
+  CLAUDE_TOKEN         OAuth access token FALLBACK      (used only if the
+                       credentials file is missing/empty — the file wins
+                       when present, because it auto-refreshes)
 
 The access token is read fresh on every poll, so if Claude Code keeps the
 credentials file refreshed on this host, the poller always uses a valid token.
@@ -155,16 +157,25 @@ def db_stats():
 # fetching
 # --------------------------------------------------------------------------- #
 def read_token():
-    if TOKEN_OVERRIDE:
-        return TOKEN_OVERRIDE
+    # Prefer the credentials file: Claude Code refreshes the access token in
+    # there before it expires (~every 30 min), so reading it fresh per poll
+    # means we always have a valid token. The env var is only a fallback for
+    # hosts that don't have Claude Code keeping the file alive — and crucially
+    # NOT an override, because a stale env value would freeze us at whichever
+    # token was current at deploy time and start handing back 401s ~30 min in.
     try:
         data = json.loads(CREDENTIALS.read_text())
-    except (OSError, ValueError) as e:
-        raise RuntimeError(f"cannot read credentials at {CREDENTIALS}: {e}")
-    tok = (data.get("claudeAiOauth") or {}).get("accessToken") or data.get("accessToken")
-    if not tok:
-        raise RuntimeError("no accessToken found in credentials file")
-    return tok
+        tok = (data.get("claudeAiOauth") or {}).get("accessToken") or data.get("accessToken")
+        if tok:
+            return tok
+    except (OSError, ValueError):
+        pass  # fall through to env fallback below
+    if TOKEN_OVERRIDE:
+        return TOKEN_OVERRIDE
+    raise RuntimeError(
+        f"no usable token: credentials file at {CREDENTIALS} missing / empty / "
+        f"has no accessToken, and CLAUDE_TOKEN env is unset"
+    )
 
 
 def fetch_usage():
